@@ -1,0 +1,46 @@
+#!/bin/sh
+
+git_src_dir="$HOME/sing-box"
+bin="$git_src_dir/sing-box"
+install_dir="/usr/local/bin"
+service="sing-box.service"
+
+if [ ! $(which git) ] || \
+   [ ! $(which go) ] || \
+   [ ! $(which make) ] || \
+   [ ! $(which screen) ]; then
+  echo "Requirements: git go make screen"
+  echo "Please install"
+  exit
+fi
+
+systemctl is-enabled $service > /dev/null
+if [ $? -ne 0 ]; then
+  echo "$service is not enabled or not found"
+  exit
+fi
+
+if [ ! -d "$git_src_dir" ]; then
+  echo "Source directory $git_src_dir not found"
+  echo "Do \"git clone https://github.com/SagerNet/sing-box.git --recurse-submodules\""
+  exit
+fi
+
+cd "$git_src_dir"
+git pull --recurse-submodules
+if [ $? -ne 0 ]; then
+  echo "Update failed"
+  exit
+fi
+make
+if [ $? -ne 0 ]; then
+  echo "Build failed"
+  exit
+fi
+
+if [ ! -f "$bin" ]; then
+  echo "File $bin not found"
+  exit
+fi
+
+screen sudo sh -c "systemctl stop $service; cp $bin $install_dir; systemctl start $service"
