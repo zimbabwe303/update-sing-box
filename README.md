@@ -45,7 +45,7 @@ Installation tips:
 
 ## iptables example
 
-Here is the example of iptables v4 rules for use with `iptables-persistent`. Includes some (pretty weak) protection against port scanners. Don't blindly copy-n-paste, read and edit according to your needs. Replace `<text>` with your data. If you don't use Reality then the NAT section is useless for you.
+Here is the example of iptables rules for use with `iptables-persistent`. Includes some (pretty weak) protection against port scanners. Don't blindly copy-n-paste, read and edit according to your needs. Replace `<text>` with your data. If you don't use Reality then the NAT section is useless for you.
 
 ```
 *filter
