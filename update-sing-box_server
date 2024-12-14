@@ -5,6 +5,19 @@ bin="$git_src_dir/sing-box"
 install_dir="/usr/local/bin"
 service="sing-box.service"
 
+spath=$(readlink -f "$0")
+
+restart() {
+  systemctl stop $service
+  cp "$1" "$2"
+  systemctl start $service
+}
+
+if [ "$1" = "restart" ]; then
+  restart "$2" "$3"
+  exit
+fi
+
 if [ ! $(which git) ] || \
    [ ! $(which go) ] || \
    [ ! $(which make) ] || \
@@ -22,12 +35,17 @@ fi
 
 if [ ! -d "$git_src_dir" ]; then
   echo "Source directory $git_src_dir not found"
-  echo "Do \"git clone https://github.com/SagerNet/sing-box.git --recurse-submodules\""
-  exit
+  read -p "Do you want to clone the repo? Y/n " r
+  if [ "$r" = "n" ]; then exit; fi
+  git clone https://github.com/SagerNet/sing-box.git "$git_src_dir" --recurse-submodules
+  if [ $? -ne 0 ]; then
+    echo "Clone failed"
+    exit
+  fi
 fi
 
 cd "$git_src_dir"
-git pull --recurse-submodules
+git pull --recurse-submodules --rebase
 if [ $? -ne 0 ]; then
   echo "Update failed"
   exit
@@ -43,4 +61,12 @@ if [ ! -f "$bin" ]; then
   exit
 fi
 
-screen sudo sh -c "systemctl stop $service; cp $bin $install_dir; systemctl start $service"
+if [ $(which sudo) ] && [ $(groups $USER | grep -o "sudo") ]; then
+  screen sudo "$spath" restart "$bin" "$install_dir"
+else
+  echo "sudo not found, using su"
+  screen su -c "\"$spath\" restart \"$bin\" \"$install_dir\"" -
+fi
+
+echo "Done"
+
