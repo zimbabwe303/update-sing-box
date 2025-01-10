@@ -32,27 +32,30 @@ if [ $? -ne 0 ]; then
   exit
 fi
 
-if [ ! -d "$git_src_dir" ]; then
-  echo "Source directory $git_src_dir not found"
-  read -p "Do you want to clone the repo? Y/n " r
-  if [ "$r" = "n" ]; then exit; fi
-  git clone https://github.com/SagerNet/sing-box.git "$git_src_dir" --recurse-submodules
+read -p "Do you want to build? (\"n\" means just copy the binary) Y/n " r
+if [ "$r" != "n" ]; then
+  if [ ! -d "$git_src_dir" ]; then
+    echo "Source directory $git_src_dir not found"
+    read -p "Do you want to clone the repo? Y/n " r
+    if [ "$r" = "n" ]; then exit; fi
+    git clone https://github.com/SagerNet/sing-box.git "$git_src_dir" --recurse-submodules
+    if [ $? -ne 0 ]; then
+      echo "Clone failed"
+      exit
+    fi
+  fi
+
+  cd "$git_src_dir"
+  git pull --recurse-submodules --rebase
   if [ $? -ne 0 ]; then
-    echo "Clone failed"
+    echo "Update failed"
     exit
   fi
-fi
-
-cd "$git_src_dir"
-git pull --recurse-submodules --rebase
-if [ $? -ne 0 ]; then
-  echo "Update failed"
-  exit
-fi
-make
-if [ $? -ne 0 ]; then
-  echo "Build failed"
-  exit
+  make
+  if [ $? -ne 0 ]; then
+    echo "Build failed"
+    exit
+  fi
 fi
 
 if [ ! -f "$bin" ]; then
@@ -68,4 +71,3 @@ else
 fi
 
 echo "Done"
-
