@@ -1,18 +1,22 @@
 # update-sing-box
 
-A very simple script for auto-updating sing-box from the git sources right on the server when you are connected to it via itself, i.e. via the same proxy server (`ssh -p <port> -o ProxyCommand='nc -X 5 -x 127.0.0.1:<proxy_port> %h %p' <user>@<ip_address>`)
+Several simple scripts for auto-updating sing-box from the git sources.
 
-Also include the client update version.
+* **update-sing-box_client**: updates client
+* **update-sing-box_server**: updates server (intended to be run on server)
+* **update-sing-box_server-from-client**: updates server by copying binary from the client (intended to be run on client)
 
-Basically what it does: (as user) *git clone/pull --rebase*, *make*, *screen* and (as sudo/su) *stop service*, *cp* and *restart service* inside the screen session. Also does preliminary checks for the system requirements.
+The server update scripts can work with the server via the same proxy.
 
-What it does not: check if the updated sing-box actually starts, so if it fails then you have to login via another proxy server or through a direct connection.
+Basically what the two first scripts do: (as user) *git clone/pull --rebase*, *make*, *screen* and (as sudo/su) *stop service*, *cp* and *restart service* inside the screen session. They also do the preliminary checks for the system requirements.
 
-Edit the variables at the beginning of the script to your requirements.
+What they do not: check if the updated sing-box actually starts, so if it fails then you have to login via another proxy server or through a direct connection.
+
+*Edit the variables at the beginning of the script as to your requirements!*
 
 ## systemd service
 
-The updater is intended to be used with sing-box as a systemd service.
+The updaters are intended to be used with sing-box ran as a systemd service.
 
 Here is a template for the *sing-box.service* file:
 

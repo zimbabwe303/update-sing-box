@@ -1,0 +1,46 @@
+#!/bin/sh
+
+# Binary to copy to server
+bin="sing-box"
+bin_path="/var/lib/sing-box/src"
+
+# Server params
+server_ip=0.0.0.0
+server_port=22
+server_user=user
+server_install_dir="/usr/local/bin"
+server_tmp_dir="/tmp"
+server_service="sing-box.service"
+
+# SSH via proxy (e.g. sing-box itself)
+proxy=1  # comment out to disable
+proxy_addr=127.0.0.1
+proxy_port=9000
+
+# === do not edit anything below this line ===
+
+scp -P $server_port ${proxy:+-o ProxyCommand="nc -X 5 -x $proxy_addr:$proxy_port %h %p"} \
+  "$bin_path"/"$bin" $server_user@$server_ip:"$server_tmp_dir"
+if [ $? -ne 0 ]; then
+  echo "Failed to upload sing-box binary to server"
+  exit
+fi
+
+if [ "$proxy" ]; then
+  echo "
+The service has to be stopped in order to update itself but since you are
+probably connecting via the very same proxy the pipe will likely be broken
+(the ssh session will freeze) therefore you'll have to press Ctrl+C a couple of
+times to exit. There will be no indication if the update was successful or not.
+"
+  read -p "Continue? Y/n " r
+  if [ "$r" = "n" ]; then exit; fi
+fi
+
+ssh -t -p $server_port ${proxy:+-o ProxyCommand="nc -X 5 -x $proxy_addr:$proxy_port %h %p"} \
+  $server_user@$server_ip "screen sudo sh -c \"systemctl stop $server_service; cp '$server_tmp_dir'/'$bin' '$server_install_dir'; systemctl start $server_service\""
+if [ $? -ne 0 ]; then
+  echo "Failed to execute the update script on the server"
+  exit
+fi
+
